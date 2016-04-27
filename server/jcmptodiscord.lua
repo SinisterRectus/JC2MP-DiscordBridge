@@ -12,6 +12,15 @@ local colors = {
 
 local host = '127.0.0.1' -- localhost
 local port = 7778 -- default port 7778
+local delay = 1000 -- milliseconds
+local queue = {}
+
+local timer = uv.new_timer()
+timer:start(delay, delay, function()
+	if #queue > 0 then
+		table.remove(queue, 1)()
+	end
+end)
 
 Events:Subscribe('ModuleLoad', function()
 
@@ -22,7 +31,9 @@ Events:Subscribe('ModuleLoad', function()
 		print(f('Connected to Discord at %s on port %s', host, port))
 		Events:Subscribe('PlayerChat', function(args)
 			local data = json.encode({tostring(args.player), args.text})
-			discord:write(data)
+			table.insert(queue, function()
+				discord:write(data)
+			end)
 		end)
 		discord:read_start(function(err, chunk)
 			assert(not err, err)
