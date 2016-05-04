@@ -33,7 +33,12 @@ client:on('ready', function()
 			if chunk then
 				coroutine.wrap(function()
 					local data = json.decode(chunk)
-					channel:sendMessage(f('[%s]: %s', data[1], data[2]))
+					local content = f('[%s]: %s', data[1], data[2])
+					if not pcall(function()
+						channel:sendMessage(content)
+					end) then
+						p('Message dropped: ' .. content)
+					end
 				end)()
 			else
 				jcmp:shutdown()
