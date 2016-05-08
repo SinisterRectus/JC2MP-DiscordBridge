@@ -35,7 +35,7 @@ client:on('ready', function()
 					local data = json.decode(chunk)
 					local content = f('[%s]: %s', data[1], data[2])
 					if not pcall(function()
-						channel:sendMessage(content)
+						assert(channel:sendMessage(content))
 					end) then
 						p('Message dropped: ' .. content)
 					end
