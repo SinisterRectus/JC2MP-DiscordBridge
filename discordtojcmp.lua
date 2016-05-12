@@ -34,10 +34,12 @@ client:on('ready', function()
 				coroutine.wrap(function()
 					local data = json.decode(chunk)
 					local content = f('[%s]: %s', data[1], data[2])
-					if not pcall(function()
+					local success, err = pcall(function()
 						assert(channel:sendMessage(content))
-					end) then
+					end)
+					if not success then
 						p('Message dropped: ' .. content)
+						p(err)
 					end
 				end)()
 			else
