@@ -3,9 +3,8 @@
 -- config ----------------------------------------------------------------------
 local host = '127.0.0.1' -- localhost
 local port = 7778 -- default port 7778
-local guildId = '' -- enter guild ID here
 local channelId = '' -- enter channel ID here
-local token = '' -- your bot token
+local token = '' -- enter your token here
 --------------------------------------------------------------------------------
 
 local uv = require('uv')
@@ -18,14 +17,14 @@ local client = discordia.Client()
 local udp = uv.new_udp()
 local jcmp
 
-client:on('ready', function()
+client:once('ready', function()
 
 	p('Logged in as ' .. client.user.username)
 
-	local guild = client:getGuild(guildId)
-	assert(guild, f('Discord guild with ID "%s" not found', guildId))
-	local channel = guild:getTextChannel(channelId)
-	assert(channel, f('Discord channel with ID "%s" not found', channelId))
+	local channel = client:getChannel(channelId)
+	if not channel then
+		return client:error('Discord channel with ID %q not found', channelId)
+	end
 
 	udp:bind(host, port)
 
@@ -38,8 +37,8 @@ client:on('ready', function()
 			coroutine.wrap(function()
 				data = decode(data)
 				local content = f('[%s]: %s', data[1], data[2])
-				if not channel:sendMessage(content) then
-					client:warning('JCMP message dropped: ' .. content)
+				if not channel:send(content) then
+					return client:warning('JCMP message dropped: ' .. content)
 				end
 			end)()
 		end
@@ -54,11 +53,10 @@ client:on('messageCreate', function(message)
 	if not jcmp then return end
 	local author = message.author
 	if author == client.user then return end
-	if not message.guild then return end
 	if message.channel.id ~= channelId then return end
 
 	udp:send(encode{author.username, message.content}, jcmp.ip, jcmp.port)
 
 end)
 
-client:run(token)
+client:run('Bot ' .. token) -- raw token must be prefixed
